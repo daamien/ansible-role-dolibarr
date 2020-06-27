@@ -1,0 +1,10 @@
+galaxy_info:
+  author: damien clochard
+  description: Manage Dolibarr environments
+  company:
+  license: BSD-3-Clause
+  min_ansible_version: 2.9
+  galaxy_tags: []
+
+dependencies: []
+

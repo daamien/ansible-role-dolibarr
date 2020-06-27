@@ -1,0 +1,31 @@
+- name: "Check backup directory"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '770'
+    owner: '{{ dolibarr_www_sysuser }}'
+    group: '{{ dolibarr_www_sysuser }}'
+  with_items:
+    - "{{ dolibarr_backup_dir }}/backup"
+    - "{{ dolibarr_backup_dir }}/documents"
+
+##
+## We assume that the authentification credentials
+## are stored in the .pgpass of dolibarr_www_sysuser
+##
+- name: "Backup data from database {{ dolibarr_db_database }}"
+  become_user: "{{ dolibarr_www_sysuser }}"
+  postgresql_db:
+    name: "{{ dolibarr_db_database }}"
+    login_host: "{{ dolibarr_db_hostname }}"
+    login_user: "{{ dolibarr_db_user }}"
+    login_port: "{{ dolibarr_db_port }}"
+    state: dump
+    target: "{{ dolibarr_backup_dir }}/backup/pg_dump_{{ dolibarr_env }}_{{ ansible_date_time.date }}.sql"
+
+- name: "Backup documents from the {{ dolibarr_env_root }}"
+  become_user: "{{ dolibarr_www_sysuser }}"
+  archive:
+    path: "{{ dolibarr_env_root }}/documents"
+    exclude_path: "{{ dolibarr_backup_dir }}"
+    dest: "{{ dolibarr_backup_dir }}/documents/documents_{{ dolibarr_env }}_{{ ansible_date_time.date }}.tar.gz"

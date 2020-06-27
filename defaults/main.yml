@@ -1,0 +1,67 @@
+---
+
+# CHANGE THIS
+#dolibarr_env: dolibarr.example.com # This should be a FQDN
+
+# General info
+dolibarr_current_version: "10.0"
+dolibarr_future_version: "{{ (dolibarr_current_version|int)+1 }}.0" # required by the upgrade task
+dolibarr_cookie_cryptkey: 1234567890abcdef5697312482a568bf;
+
+##
+## Virtual Host info
+##
+dolibarr_www_service: apache2 # only apache2 for now
+dolibarr_www_domain_name: "{{ dolibarr_env }}"
+dolibarr_www_root: /var/www
+dolibarr_www_sysuser: www-data
+dolibarr_www_sysgroup: www-data
+
+##
+## Internal elements
+##
+dolibarr_env_root: "{{ dolibarr_www_root }}/{{ dolibarr_env }}"
+dolibarr_install_lock: "{{ dolibarr_env_root }}/documents/install.lock"
+dolibarr_backup_dir: "{{ dolibarr_env_root }}/documents/admin/"
+
+##
+## Database info
+##
+dolibarr_db_type: pgsql # what else ?
+dolibarr_db_sysuser: postgres
+dolibarr_db_hostname: localhost
+dolibarr_db_user: dolibarr
+dolibarr_db_port: 5432
+dolibarr_db_database: "{{ dolibarr_env.split('.')[0] | lower }}"
+
+# instead of setting the password here, it is recommended to
+# put it in the .pgpass of `dolibarr_www_sysuser`
+#dolibarr_db_pass: "__CHaNGe_Me__"
+
+##
+## Git info
+##
+dolibarr_git_sysuser: dolibarr
+dolibarr_git_repo: https://github.com/Dolibarr/dolibarr.git
+
+
+##
+## Sync info
+##
+#dolibarr_target_env:
+#dolibarr_target_host:
+dolibarr_target_env_root: "{{ dolibarr_www_root }}/{{ dolibarr_target_env }}"
+dolibarr_target_www_domain_name: "{{ dolibarr_target_env }}"
+dolibarr_target_sync_documents: True
+dolibarr_target_db_type: pgsql
+dolibarr_target_db_sysuser: postgres
+dolibarr_target_db_hostname: "{{ dolibarr_target_host }}"
+dolibarr_target_db_user: dolibarr
+dolibarr_target_db_pass:
+dolibarr_target_db_port: 5432
+dolibarr_target_db_database: "{{ dolibarr_env.split('.')[0] | lower }}"
+dolibarr_target_background_color: "255,170,86"
+dolibarr_target_sync_post_queries:
+  - "UPDATE llx_const SET value = '{{ dolibarr_target_env }}.log' WHERE name = 'SYSLOG_FILE'"
+  - "UPDATE llx_const SET value = '{{ dolibarr_target_background_color }}' WHERE name LIKE 'THEME_%_BACKBODY'"
+  - "UPDATE llx_const SET value = 1 WHERE name = 'MAIN_DISABLE_ALL_MAILS'"

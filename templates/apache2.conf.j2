@@ -1,0 +1,6 @@
+<VirtualHost *:80>
+    ServerName {{ dolibarr_www_domain_name }}
+    DocumentRoot {{ dolibarr_env_root }}
+    ErrorLog /var/log/apache2/{{ dolibarr_env }}-error.log
+    CustomLog /var/log/apache2/{{ dolibarr_env }}-access.log combined
+</VirtualHost>

@@ -1,0 +1,84 @@
+
+- name: Install required packages
+  package:
+    name:
+      - git
+      - php-pgsql
+      - php-curl
+      - php-gd
+      - php-intl
+      - libapache2-mod-php
+      - certbot
+      - python3-certbot-apache
+    state: present
+
+- name: dolibarr system user is present
+  user:
+    name: "{{ dolibarr_git_sysuser }}"
+    comment: Dolibarr deployment user
+    shell: /usr/sbin/nologin
+
+- name: dolibarr postgres role is present
+  become_user: postgres
+  postgresql_user:
+    name: "{{ dolibarr_db_user }}"
+
+- name: dolibarr vhost directory is present
+  file:
+    path: "{{ dolibarr_env_root }}"
+    state: directory
+    owner: www-data
+    group: www-data
+
+- name: Create a dolibarr database
+  when: dolibarr_db_type == 'pgsql'
+  become_user: postgres
+  postgresql_db:
+    login_host: "{{ dolibarr_db_hostname }}"
+    login_port: "{{ dolibarr_db_port }}"
+    login_user: "{{ dolibarr_db_sysuser }}"
+    name: "{{ dolibarr_db_database }}"
+    owner: "{{ dolibarr_db_user }}"
+
+- name: Fetch the dolibarr code
+  become_user: "{{ dolibarr_git_sysuser }}"
+  git:
+    repo: "{{ dolibarr_git_repo }}"
+    dest: "~{{ dolibarr_git_sysuser }}/dolibarr"
+    version: "{{ dolibarr_current_version }}"
+    depth: 1 # shallow clone
+
+- name: Deploy code to the vhost directory
+  become_user: www-data
+  shell: "rsync -a ~{{ dolibarr_git_sysuser }}/dolibarr/htdocs/ {{ dolibarr_env_root }}" #trailing slash is important
+
+- name: Configure
+  become_user: www-data
+  template:
+    src: conf/conf.php.j2
+    dest: "{{ dolibarr_env_root }}/conf/conf.php"
+
+- name: Apache vhost is available
+  template:
+    src: apache2.conf.j2
+    dest: "/etc/apache2/sites-available/{{ dolibarr_env }}.conf"
+
+- name: Enable pgsql module for PHP
+  command: phpenmod pdo_pgsql
+  notify:
+  - reload HTTP service
+
+- name: Enable PHP for Apache
+  command: a2enmod php7.2
+  notify:
+  - reload HTTP service
+
+- name: Enable the vhost for Apache
+  command: "a2ensite {{ dolibarr_env }}"
+  notify:
+  - reload HTTP service
+
+- name: Activate HTTPS
+  command: "certbot --non-interactive --agree-tos --register-unsafely-without-email -d {{ dolibarr_www_domain_name }} -w {{ dolibarr_env_root }} --apache --redirect"
+
+

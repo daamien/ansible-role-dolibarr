@@ -1,0 +1,11 @@
+---
+
+- name: reload HTTP service
+  service:
+    name: "{{ dolibarr_www_service }}"
+    state: reloaded
+
+- name: restart HTTP service
+  service:
+    name: "{{ dolibarr_www_service }}"
+    state: restarted
