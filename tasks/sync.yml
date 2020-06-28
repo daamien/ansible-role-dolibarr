@@ -1,3 +1,4 @@
+---
 ##
 ## This play runs on the source (production env)
 ## The data is pushed to the target (testing env)
@@ -47,5 +48,3 @@
     login_port: "{{ dolibarr_target_db_port }}"
     query: "{{ item }}"
   with_items: "{{ dolibarr_target_sync_post_queries }}"
-
-

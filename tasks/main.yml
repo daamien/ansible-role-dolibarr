@@ -1,3 +1,4 @@
+---
 
 - name: Install required packages
   package:
@@ -19,6 +20,7 @@
     shell: /usr/sbin/nologin
 
 - name: dolibarr postgres role is present
+  become: true
   become_user: postgres
   postgresql_user:
     name: "{{ dolibarr_db_user }}"
@@ -32,6 +34,7 @@
 
 - name: Create a dolibarr database
   when: dolibarr_db_type == 'pgsql'
+  become: true
   become_user: postgres
   postgresql_db:
     login_host: "{{ dolibarr_db_hostname }}"
@@ -41,18 +44,23 @@
     owner: "{{ dolibarr_db_user }}"
 
 - name: Fetch the dolibarr code
+  become: true
   become_user: "{{ dolibarr_git_sysuser }}"
   git:
     repo: "{{ dolibarr_git_repo }}"
     dest: "~{{ dolibarr_git_sysuser }}/dolibarr"
     version: "{{ dolibarr_current_version }}"
-    depth: 1 # shallow clone
+    depth: 1  # shallow clone
 
 - name: Deploy code to the vhost directory
+  become: true
   become_user: www-data
-  shell: "rsync -a ~{{ dolibarr_git_sysuser }}/dolibarr/htdocs/ {{ dolibarr_env_root }}" #trailing slash is important
+  synchronize:
+    src: "~{{ dolibarr_git_sysuser }}/dolibarr/htdocs/"
+    dest: "{{ dolibarr_env_root }}"
 
 - name: Configure
+  become: true
   become_user: www-data
   template:
     src: conf/conf.php.j2
@@ -65,20 +73,28 @@
 
 - name: Enable pgsql module for PHP
   command: phpenmod pdo_pgsql
+  args:
+    creates: "/etc/php/7.2/apache2/conf.d/20-pdo_pgsql.ini"
   notify:
-  - reload HTTP service
+    - reload HTTP service
 
 - name: Enable PHP for Apache
-  command: a2enmod php7.2
+  apache2_module:
+    state: present
+    name: php7.2
   notify:
-  - reload HTTP service
+    - reload HTTP service
 
 - name: Enable the vhost for Apache
   command: "a2ensite {{ dolibarr_env }}"
+  args:
+    creates: "/etc/apache2/sites-enabled/{{ dolibarr_env }}.conf"
   notify:
-  - reload HTTP service
+    - reload HTTP service
 
 - name: Activate HTTPS
   command: "certbot --non-interactive --agree-tos --register-unsafely-without-email -d {{ dolibarr_www_domain_name }} -w {{ dolibarr_env_root }} --apache --redirect"
-
-
+  args:
+    creates: "/etc/apache2/sites-enabled/{{ dolibarr_env }}-le-ssl.conf"
+  notify:
+    - reload HTTP service
