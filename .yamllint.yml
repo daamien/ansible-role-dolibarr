@@ -30,5 +30,6 @@ rules:
   quoted-strings: disable
   trailing-spaces: enable
   truthy:
+    allowed-values: ['true', 'false', 'on']
+    # 'on' avoids false positive in Github Actions config file
     level: warning
-
