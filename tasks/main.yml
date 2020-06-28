@@ -93,7 +93,11 @@
     - reload HTTP service
 
 - name: Activate HTTPS
-  command: "certbot --non-interactive --agree-tos --register-unsafely-without-email -d {{ dolibarr_www_domain_name }} -w {{ dolibarr_env_root }} --apache --redirect"
+  command: |
+    certbot --non-interactive --agree-tos --register-unsafely-without-email \
+      -d "{{ dolibarr_www_domain_name }}" \
+      -w "{{ dolibarr_env_root }}" \
+      --apache --redirect
   args:
     creates: "/etc/apache2/sites-enabled/{{ dolibarr_env }}-le-ssl.conf"
   notify:

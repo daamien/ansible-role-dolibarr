@@ -8,6 +8,11 @@
 ##  - the www-data system user on source can connect with ssh to target
 ##
 
+##
+## FIXME: this play should be run on the target host and then
+## we'd use `delegate_to: source` only for the 2 ²:export tasks : pg_dump and rsync
+##
+
 - name: Load target info
   set_fact:
     target: "{{ hostvars[dolibarr_target_ansible_host] }}"
@@ -35,7 +40,14 @@
 - name: Export data from source to target
   become: true
   become_user: postgres
-  shell: "pg_dump {{ dolibarr_db_database }} | psql -h {{ dolibarr_target_db_hostname }} -p {{ dolibarr_target_db_port }} {{ dolibarr_target_db_database }}"
+  shell: |
+    set -o pipefail &&
+    pg_dump "{{ dolibarr_db_database }}" \
+      | psql  -h "{{ dolibarr_target_db_hostname }}" \
+              -p "{{ dolibarr_target_db_port }}" \
+              "{{ dolibarr_target_db_database }}"
+  args:
+    executable: /bin/bash
 
 - name: Export the documents
   when: dolibarr_target_sync_documents|bool
