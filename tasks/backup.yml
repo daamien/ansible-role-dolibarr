@@ -16,6 +16,7 @@
 ## are stored in the .pgpass of dolibarr_www_sysuser
 ##
 - name: "Backup data from database {{ dolibarr_db_database }}"
+  become: true
   become_user: "{{ dolibarr_www_sysuser }}"
   postgresql_db:
     name: "{{ dolibarr_db_database }}"
@@ -26,6 +27,7 @@
     target: "{{ dolibarr_backup_dir }}/backup/pg_dump_{{ dolibarr_env }}_{{ ansible_date_time.date }}.sql"
 
 - name: "Backup documents from the {{ dolibarr_env_root }}"
+  become: true
   become_user: "{{ dolibarr_www_sysuser }}"
   archive:
     path: "{{ dolibarr_env_root }}/documents"

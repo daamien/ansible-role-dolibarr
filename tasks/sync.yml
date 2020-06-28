@@ -13,6 +13,7 @@
     target: "{{ hostvars[dolibarr_target_ansible_host] }}"
 
 - name: Remove the dolibarr database if present on target
+  become: true
   become_user: postgres
   postgresql_db:
     login_host: "{{ dolibarr_target_db_hostname }}"
@@ -22,6 +23,7 @@
     state: absent
 
 - name: Create an empty dolibarr database on target
+  become: true
   become_user: postgres
   postgresql_db:
     login_host: "{{ dolibarr_target_db_hostname }}"
@@ -31,15 +33,18 @@
     owner: "{{ dolibarr_target_db_user }}"
 
 - name: Export data from source to target
+  become: true
   become_user: postgres
   shell: "pg_dump {{ dolibarr_db_database }} | psql -h {{ dolibarr_target_db_hostname }} -p {{ dolibarr_target_db_port }} {{ dolibarr_target_db_database }}"
 
 - name: Export the documents
   when: dolibarr_target_sync_documents|bool
+  become: true
   become_user: www-data
   shell: "rsync -az {{ dolibarr_env_root }}/documents {{ dolibarr_target_ansible_host }}:{{ dolibarr_target_env_root }}/"
 
 - name: Apply post-sync queries
+  become: true
   become_user: postgres
   postgresql_query:
     db: "{{ dolibarr_target_db_database }}"

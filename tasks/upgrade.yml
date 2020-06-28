@@ -11,6 +11,7 @@
     mode: 0777
 
 - name: checkout dolibarr repo
+  become: true
   become_user: "{{ dolibarr_git_sysuser }}"
   git:
     repo: "{{ dolibarr_git_repo }}"
@@ -18,6 +19,7 @@
     version: "{{ dolibarr_future_version  }}"
 
 - name: upgrade vhost files
+  become: true
   synchronize:
     src: "~{{ dolibarr_git_sysuser }}/dolibarr/htdocs/"
     dest: "{{ dolibarr_env_root }}"
@@ -26,37 +28,41 @@
       - "--exclude=.git"
 
 - name: remove the install lock
-  become_user: root
+  become: true
   file:
     path: "{{ dolibarr_install_lock }}"
     state: absent
 
 - name: upgrade the database (step 1)
+  become: true
   become_user: "{{ dolibarr_www_sysuser }}"
   shell: "php upgrade.php {{ dolibarr_current_version }}.0 {{ dolibarr_future_version }}.0 > {{ temp_dir }}/output.step1.html"
   args:
     chdir: '{{ dolibarr_env_root }}/install/'
 
 - name: upgrade the database (step 2)
+  become: true
   become_user: "{{ dolibarr_www_sysuser }}"
   shell: "php upgrade2.php {{ dolibarr_current_version }}.0 {{ dolibarr_future_version }}.0 > {{ temp_dir }}/output.step2.html"
   args:
     chdir: '{{ dolibarr_env_root }}/install/'
 
 - name: upgrade the database (step 5)
+  become: true
   become_user: "{{ dolibarr_www_sysuser }}"
   shell: "php step5.php {{ dolibarr_current_version }}.0 {{ dolibarr_future_version }}.0 > {{ temp_dir }}/output.step5.html"
   args:
     chdir: '{{ dolibarr_env_root }}/install/'
 
 - name: restore install lock
-  become_user: root
+  become: true
   file:
     path: "{{ dolibarr_install_lock }}"
     state: touch
     mode: 0444
 
 - name: remove the install dir
+  become: true
   become_user: "{{ dolibarr_www_sysuser }}"
   file:
     path: "{{ dolibarr_env_root }}/install/"
