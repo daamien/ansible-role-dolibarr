@@ -1,5 +1,8 @@
 ---
 
+# Force python3
+ansible_python_interpreter: /usr/bin/python3
+
 # CHANGE THIS
 # dolibarr_env: dolibarr.example.com  # This should be a FQDN
 
@@ -64,6 +67,6 @@ dolibarr_target_db_port: 5432
 dolibarr_target_db_database: "{{ dolibarr_env.split('.')[0] | lower }}"
 dolibarr_target_background_color: "255,170,86"
 dolibarr_target_sync_post_queries:
-  - "UPDATE llx_const SET value = '{{ dolibarr_target_env }}.log' WHERE name = 'SYSLOG_FILE'"
+  - "UPDATE llx_const SET value = 'DOL_DATA_ROOT/{{ dolibarr_target_env }}.log' WHERE name = 'SYSLOG_FILE'"
   - "UPDATE llx_const SET value = '{{ dolibarr_target_background_color }}' WHERE name LIKE 'THEME_%_BACKBODY'"
   - "UPDATE llx_const SET value = 1 WHERE name = 'MAIN_DISABLE_ALL_MAILS'"
