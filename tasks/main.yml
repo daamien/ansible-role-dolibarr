@@ -7,10 +7,14 @@
       - php-pgsql
       - php-curl
       - php-gd
+      - php-imap
       - php-intl
+      - php-zip
       - libapache2-mod-php
       - certbot
       - python3-certbot-apache
+      - python3-psycopg2
+      - rsync
     state: present
 
 - name: dolibarr system user is present
@@ -55,9 +59,12 @@
 - name: Deploy code to the vhost directory
   become: true
   become_user: www-data
-  synchronize:
-    src: "~{{ dolibarr_git_sysuser }}/dolibarr/htdocs/"
-    dest: "{{ dolibarr_env_root }}"
+  shell: rsync -a ~{{ dolibarr_git_sysuser }}/dolibarr/htdocs/* {{ dolibarr_env_root }}
+#  synchronize:
+#    src: "~{{ dolibarr_git_sysuser }}/dolibarr/htdocs/"
+#    dest: "{{ dolibarr_env_root }}"
+#    rsync_opts:
+#          - "--chown=www-data:"
 
 - name: Configure
   become: true
